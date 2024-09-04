@@ -78,7 +78,7 @@ def _load_morph_priorities_from_file(
     )
     try:
         with open(priority_file_path, encoding="utf-8") as csvfile:
-            morph_reader = csv.reader(csvfile, delimiter=",")
+            morph_reader = csv.reader(csvfile, delimiter='\t')
             headers: list[str] | None = next(morph_reader, None)
             priority_file: PriorityFile = _get_file_type_and_format(
                 priority_file_path, headers
@@ -298,5 +298,5 @@ def _populate_priorities_with_lemmas_from_minimal_priority_file(
             # rows after this will be ignored by the scoring algorithm
             break
         lemma = row[file_type_and_format.lemma_header_index]
-        key = (lemma, lemma)
+        key = (lemma.lower(), lemma.lower())
         morph_priority_dict[key] = index

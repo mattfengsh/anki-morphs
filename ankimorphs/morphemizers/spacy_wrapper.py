@@ -160,6 +160,9 @@ def get_nlp(spacy_model_name: str):  # type: ignore[no-untyped-def] # pylint:dis
             "attribute_ruler",
             "lemmatizer",
             "morphologizer",
+            "ner",
+            "entity_linker",
+            "entity_ruler",
         }
     elif nlp.lang == "es":
         assert isinstance(nlp.tokenizer, Tokenizer)

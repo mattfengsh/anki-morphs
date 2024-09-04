@@ -87,6 +87,15 @@ def update_all_morphs_field(
     index: int = field_name_dict[am_globals.EXTRA_FIELD_ALL_MORPHS][0]
     note.fields[index] = all_morphs_string
 
+def update_non_priorities_field(
+    am_config: AnkiMorphsConfig,
+    field_name_dict: dict[str, tuple[int, FieldDict]],
+    note: Note,
+    all_morphs: list[Morpheme],
+) -> None:
+    all_morphs_string: str = _get_string_of_morphs(am_config, all_morphs)
+    index: int = field_name_dict['non-priorities'][0]
+    note.fields[index] = all_morphs_string
 
 def update_all_morphs_count_field(
     field_name_dict: dict[str, tuple[int, FieldDict]],

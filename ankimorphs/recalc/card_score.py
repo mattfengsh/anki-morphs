@@ -36,6 +36,7 @@ class CardScore:
         self.terms = "N/A"
 
         if len(card_morph_metrics.all_morphs) == 0:
+            self.score = 0
             return
 
         if am_config.recalc_move_known_new_cards_to_the_end:
@@ -98,7 +99,9 @@ class CardScore:
             len(card_morph_metrics.unknown_morphs) * MORPH_UNKNOWN_PENALTY
         )
 
-        _score = unknown_morphs_amount_score + min(tuning, MORPH_UNKNOWN_PENALTY - 1)
+
+
+        _score = int(len(card_morph_metrics.non_priorities) * 100000000  + card_morph_metrics.highest_priority )
 
         # cap score to prevent 32-bit integer overflow
         self.score = min(_score, _DEFAULT_SCORE)

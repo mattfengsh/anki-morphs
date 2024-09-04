@@ -64,18 +64,38 @@ def cache_anki_data(  # pylint:disable=too-many-locals, too-many-branches, too-m
         # These two lists have to be synchronized, i.e., the indexes align, that way they can be used for lookup later.
         all_text: list[str] = []
         all_keys: list[int] = []
-
+        note_data = {}
         for key, _card_data in cards_data_dict.items():
-            # Some spaCy models label all capitalized words as proper nouns,
-            # which is pretty bad. To prevent this, we lower case everything.
-            # This in turn makes some models not label proper nouns correctly,
-            # but this is preferable because we also have the 'Mark as Name'
-            # feature that can be used in that case.
             expression = get_processed_expression(
-                am_config, _card_data.expression.lower()
+                # am_config, _card_data.expression.lower()
+                am_config, _card_data.expression
+            )
+            if _card_data.note_id in note_data:
+                note_data[_card_data.note_id][1].append(key)
+            else:
+                note_data[_card_data.note_id] = [expression, [key]]
+
+        card_amount = len(note_data)
+
+        for key, _card_data in note_data.items():
+            expression = get_processed_expression(
+                am_config, _card_data[0]
             )
             all_text.append(expression)
             all_keys.append(key)
+
+        # for key, _card_data in cards_data_dict.items():
+        #     # Some spaCy models label all capitalized words as proper nouns,
+        #     # which is pretty bad. To prevent this, we lower case everything.
+        #     # This in turn makes some models not label proper nouns correctly,
+        #     # but this is preferable because we also have the 'Mark as Name'
+        #     # feature that can be used in that case.
+        #     expression = get_processed_expression(
+        #         # am_config, _card_data.expression.lower()
+        #         am_config, _card_data.expression
+        #     )
+        #     all_text.append(expression)
+        #     all_keys.append(key)
 
         nlp = None  # spacy.Language
         morphemizer = morphemizer_module.get_morphemizer_by_description(
@@ -99,13 +119,14 @@ def cache_anki_data(  # pylint:disable=too-many-locals, too-many-branches, too-m
         if nlp is not None:
             for index, doc in enumerate(nlp.pipe(all_text)):
                 progress_utils.background_update_progress_potentially_cancel(
-                    label=f"Extracting morphs from<br>{config_filter.note_type} cards<br>card: {index} of {card_amount}",
+                    label=f"Extracting morphs from<br>{config_filter.note_type} notes<br>note: {index} of {card_amount}",
                     counter=index,
                     max_value=card_amount,
                 )
-                morphs = set(get_processed_spacy_morphs(am_config, doc))
+                morphs = set(get_processed_spacy_morphs(am_config, doc, nlp))
                 key = all_keys[index]
-                cards_data_dict[key].morphs = morphs
+                for k in note_data[key][1]:
+                    cards_data_dict[k].morphs = morphs
         else:
             for index, _expression in enumerate(all_text):
                 progress_utils.background_update_progress_potentially_cancel(
@@ -120,6 +141,8 @@ def cache_anki_data(  # pylint:disable=too-many-locals, too-many-branches, too-m
                 )
                 key = all_keys[index]
                 cards_data_dict[key].morphs = morphs
+
+        card_amount = len(cards_data_dict)
 
         for counter, card_id in enumerate(cards_data_dict):
             progress_utils.background_update_progress_potentially_cancel(

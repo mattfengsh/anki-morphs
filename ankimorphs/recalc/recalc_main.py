@@ -229,6 +229,7 @@ def _update_cards_and_notes(  # pylint:disable=too-many-locals, too-many-stateme
                     card=card,
                     unknowns=len(cards_morph_metrics.unknown_morphs),
                     has_learning_morphs=cards_morph_metrics.has_learning_morphs,
+                    non_priorities=len(cards_morph_metrics.non_priorities)
                 )
 
                 if config_filter.extra_study_morphs:
@@ -246,6 +247,12 @@ def _update_cards_and_notes(  # pylint:disable=too-many-locals, too-many-stateme
                         note=note,
                         all_morphs=cards_morph_metrics.all_morphs,
                     )
+                extra_field_utils.update_non_priorities_field(
+                    am_config=am_config,
+                    field_name_dict=field_name_dict,
+                    note=note,
+                    all_morphs=cards_morph_metrics.non_priorities,
+                )
                 if config_filter.extra_all_morphs_count:
                     extra_field_utils.update_all_morphs_count_field(
                         field_name_dict=field_name_dict,

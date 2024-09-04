@@ -13,6 +13,8 @@ class CardMorphsMetrics:  # pylint:disable=too-many-instance-attributes
         "total_priority_learning_morphs",
         "avg_priority_all_morphs",
         "avg_priority_learning_morphs",
+        "non_priorities",
+        "highest_priority",
     )
 
     def __init__(
@@ -31,6 +33,8 @@ class CardMorphsMetrics:  # pylint:disable=too-many-instance-attributes
         self.total_priority_learning_morphs: int = 0
         self.avg_priority_all_morphs: int = 0
         self.avg_priority_learning_morphs: int = 0
+        self.non_priorities: list[Morpheme] = []
+        self.highest_priority: int = 0
 
         try:
             self.all_morphs = card_morph_map_cache[card_id]
@@ -56,6 +60,8 @@ class CardMorphsMetrics:  # pylint:disable=too-many-instance-attributes
             learning_interval_attribute = "highest_lemma_learning_interval"
             sub_key_attribute = "lemma"
 
+        hp = 0
+
         for morph in self.all_morphs:
             learning_interval = getattr(morph, learning_interval_attribute)
             assert learning_interval is not None
@@ -66,12 +72,15 @@ class CardMorphsMetrics:  # pylint:disable=too-many-instance-attributes
             # this is a composite key consisting of either:
             # - (morph.lemma, morph.lemma)
             # - (morph.lemma, morph.inflection)
-            key = (morph.lemma, sub_key)
+            key = (morph.lemma.lower(), sub_key.lower())
 
             if key in morph_priorities:
                 morph_priority = morph_priorities[key]
+                if morph_priority > hp:
+                    hp = morph_priority
             else:
                 morph_priority = default_morph_priority
+                self.non_priorities.append(morph)
 
             self.total_priority_all_morphs += morph_priority
 
@@ -82,6 +91,7 @@ class CardMorphsMetrics:  # pylint:disable=too-many-instance-attributes
                 self.num_learning_morphs += 1
                 self.total_priority_learning_morphs += morph_priority
 
+        self.highest_priority = hp
         self.avg_priority_all_morphs = int(
             self.total_priority_all_morphs / len(self.all_morphs)
         )

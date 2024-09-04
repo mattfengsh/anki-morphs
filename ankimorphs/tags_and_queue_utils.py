@@ -13,11 +13,12 @@ from .ankimorphs_config import AnkiMorphsConfig
 
 
 def update_tags_and_queue_of_new_cards(
-    am_config: AnkiMorphsConfig,
-    note: Note,
-    card: Card,
-    unknowns: int,
-    has_learning_morphs: bool,
+        am_config: AnkiMorphsConfig,
+        note: Note,
+        card: Card,
+        unknowns: int,
+        has_learning_morphs: bool,
+        non_priorities: int,
 ) -> None:
     # There are 3 different tags that we want recalc to update:
     # - am-ready
@@ -66,6 +67,9 @@ def update_tags_and_queue_of_new_cards(
         if am_config.tag_not_ready not in note.tags:
             remove_exclusive_tags(note, mutually_exclusive_tags)
             note.tags.append(am_config.tag_not_ready)
+    remove_exclusive_tags(note, ["non_priorities", ])
+    if non_priorities > 0:
+        note.tags.append("non_priorities")
 
 
 def remove_exclusive_tags(note: Note, mutually_exclusive_tags: list[str]) -> None:

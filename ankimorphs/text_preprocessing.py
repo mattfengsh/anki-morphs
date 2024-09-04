@@ -10,9 +10,12 @@ square_brackets_regex = re.compile(r"\[[^]]*]")
 round_brackets_regex = re.compile(r"（[^）]*）")
 slim_round_brackets_regexp = re.compile(r"\([^)]*\)")
 non_alpha_regexp = re.compile(r"[-'\w]")
+filter_regexp = re.compile(r"\d+")
+hyphen_regex = re.compile(r"-")
+space_regex = re.compile(r"\s+")
 
 
-def get_processed_spacy_morphs(am_config: AnkiMorphsConfig, doc: Any) -> list[Morpheme]:
+def get_processed_spacy_morphs(am_config: AnkiMorphsConfig, doc: Any, nlp) -> list[Morpheme]:
     # doc: spacy.tokens.Doc
 
     morphs: list[Morpheme] = []
@@ -21,16 +24,34 @@ def get_processed_spacy_morphs(am_config: AnkiMorphsConfig, doc: Any) -> list[Mo
         if not non_alpha_regexp.search(w.text):
             continue
 
+        if filter_regexp.search(w.text):
+            continue
+
         if am_config.preprocess_ignore_names_morphemizer:
             if w.pos == 96:  # PROPN
                 continue
-
-        morphs.append(
-            Morpheme(
-                lemma=w.lemma_,
-                inflection=w.text,
+        if w.pos_ == "PUNCT" or (w.pos_ == "PROPN" and w.ent_type_ == "PERSON"):
+            continue
+        if (w.pos_ == "PROPN" and w.ent_type_ in ["NORP", "FAC", "ORG", "GPE", "LOC", "PRODUCT", "EVENT",
+                                                  "WORK_OF_ART", "LAW"]):
+            doc_t = nlp(w.text.lower())
+            for x in doc_t:
+                if x.pos_ == "PROPN":
+                    continue
+                else:
+                    morphs.append(
+                        Morpheme(
+                            lemma=w.lemma_,
+                            inflection=w.text,
+                        )
+                    )
+        else:
+            morphs.append(
+                Morpheme(
+                    lemma=w.lemma_,
+                    inflection=w.text,
+                )
             )
-        )
 
     if am_config.preprocess_ignore_names_textfile:
         morphs = remove_names_textfile(morphs)
@@ -64,6 +85,9 @@ def get_processed_expression(am_config: AnkiMorphsConfig, expression: str) -> st
     if am_config.preprocess_ignore_slim_round_bracket_contents:
         if slim_round_brackets_regexp.search(expression):
             expression = slim_round_brackets_regexp.sub("", expression)
+
+    if hyphen_regex.search(expression):
+        expression = hyphen_regex.sub(" ", expression)
 
     return expression
 
